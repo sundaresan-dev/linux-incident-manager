@@ -12,7 +12,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Install binary
-cp "$SCRIPT_DIR/im" /usr/local/bin/im
+mv "$SCRIPT_DIR/im" /usr/local/bin/im
 chmod +x /usr/local/bin/im
 
 # Create config directory
