@@ -24,7 +24,7 @@ echo "[INFO] Config directory created at /etc/im"
 
 # Auto delete local repo
 echo "[CLEANUP] Removing local installer files..."
-rm -rf "$SCRIPT_DIR"
+rm -rf "~/$SCRIPT_DIR"
 
 echo "[DONE] Local repository removed"
 echo "[INFO] Installation complete"
