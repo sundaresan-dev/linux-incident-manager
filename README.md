@@ -26,10 +26,9 @@ auto-remediating common incidents.
 
 ---
 
-## Installation (GitHub)
+## Installation (Recommended)
+
+Install using a one-line bootstrap command:
 
 ```bash
-git clone https://github.com/sundaresan-dev/linux-incident-manager.git
-cd linux-incident-manager
-chmod +x im install.sh
-sudo ./install.sh
+curl -fsSL https://raw.githubusercontent.com/sundaresan-dev/linux-incident-manager/main/install.sh | sudo bash
