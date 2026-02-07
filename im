@@ -1,0 +1,295 @@
+#!/bin/bash
+# =========================================================
+# Linux Incident Manager (im)
+# Version   : 1.8.4
+# Developer : Sundaresan
+# =========================================================
+
+VERSION="1.8.4"
+DEVELOPER="Sundaresan"
+
+CONFIG_DIR="/etc/im"
+SERVICE_FILE="$CONFIG_DIR/services.conf"
+
+HOST=$(hostname)
+START_TIME=$(date "+%Y-%m-%d %H:%M:%S")
+START_EPOCH=$(date +%s)
+
+CRITICAL=0
+WARNING=0
+INFO=0
+HEALTH_SCORE=100
+EXIT_CODE=0
+FINAL_STATUS="HEALTHY"
+JSON_MODE=false
+
+# ---------------- DEFAULT SERVICES ----------------
+DEFAULT_SERVICES=(ssh cron docker nginx)
+
+# ---------------- HELP ----------------
+show_help() {
+cat <<EOF
+Linux Incident Manager (im) v$VERSION
+
+Usage:
+  im              Run system checks
+  im --help       Show help
+  im --init       Initialize default services
+  im -es          Edit / add services
+  im -ct          Clear temp files
+  im -who         Show developer info
+  im --json       Output status in JSON
+
+EOF
+exit 0
+}
+
+# ---------------- ARG PARSING ----------------
+case "$1" in
+  "")
+    ;;
+  --help|-h)
+    show_help
+    ;;
+  --json)
+    JSON_MODE=true
+    ;;
+  --init)
+    sudo mkdir -p "$CONFIG_DIR"
+    sudo rm -f "$SERVICE_FILE"
+    sudo touch "$SERVICE_FILE"
+    for svc in "${DEFAULT_SERVICES[@]}"; do
+      echo "$svc" | sudo tee -a "$SERVICE_FILE" >/dev/null
+    done
+    echo "[SUCCESS] Default services initialized"
+    exit 0
+    ;;
+  -es)
+    echo "[ACTION] Opening service configuration editor"
+    echo "[PATH] $SERVICE_FILE"
+    sudo mkdir -p "$CONFIG_DIR"
+    sudo touch "$SERVICE_FILE"
+    sudo nano "$SERVICE_FILE"
+    exit 0
+    ;;
+  -ct)
+    echo "[ACTION] Clearing temp files..."
+    sudo rm -rf /tmp/* /var/tmp/* 2>/dev/null
+    echo "[SUCCESS] Temp cleanup completed"
+    exit 0
+    ;;
+  -who)
+    echo "Linux Incident Manager"
+    echo "Developer : $DEVELOPER"
+    exit 0
+    ;;
+  *)
+    echo "[ERROR] Unknown option: $1"
+    echo
+    show_help
+    ;;
+esac
+
+# ---------------- OS DETECTION ----------------
+if [ -f /etc/os-release ]; then
+  . /etc/os-release
+  OS_FULL="$PRETTY_NAME"
+else
+  OS_FULL="Unknown Linux"
+fi
+
+# ---------------- HEADER ----------------
+cat <<EOF
+========================================================
+ Linux Incident Manager v$VERSION ($OS_FULL)
+ Mode        : AUTO-FIX
+ Run Mode    : STANDARD
+ Environment : LOCAL
+ Host        : $HOST
+ OS          : $OS_FULL
+ Start Time  : $START_TIME
+========================================================
+EOF
+
+# ---------------- LOAD SERVICES ----------------
+MAIN_SERVICES=()
+[ -f "$SERVICE_FILE" ] && mapfile -t MAIN_SERVICES < <(grep -v '^#' "$SERVICE_FILE" | sed '/^$/d')
+
+# ---------------- SYSTEM SUMMARY ----------------
+UPTIME_SINCE=$(uptime -s)
+CPU_CORES=$(nproc)
+CPU_USAGE=$(top -bn1 | awk '/Cpu\(s\)/ {printf "%.0f", 100 - $8}')
+
+TOTAL_MEM_MB=$(free -m | awk '/Mem:/ {print $2}')
+USED_MEM_MB=$(free -m | awk '/Mem:/ {print $3}')
+MEM_USED_PERCENT=$(( USED_MEM_MB * 100 / TOTAL_MEM_MB ))
+
+DISK_TOTAL=$(df -h / | awk 'NR==2 {print $2}')
+DISK_USED=$(df -h / | awk 'NR==2 {print $3}')
+DISK_USED_PERCENT=$(df / | awk 'NR==2 {gsub("%",""); print $5}')
+
+echo
+echo "--------------------------------------------------------"
+echo "[SYSTEM] Resource Summary"
+echo "--------------------------------------------------------"
+echo "[SYSTEM] Uptime Since   : $UPTIME_SINCE"
+echo "[CPU]    Cores          : $CPU_CORES"
+echo "[CPU]    Usage          : $CPU_USAGE%"
+echo "[MEMORY] Total RAM      : ${TOTAL_MEM_MB} MB"
+echo "[MEMORY] Used RAM       : ${USED_MEM_MB} MB"
+echo "[DISK]   Total Storage  : $DISK_TOTAL"
+echo "[DISK]   Used Storage   : $DISK_USED ($DISK_USED_PERCENT%)"
+
+# ---------------- BAR FUNCTION ----------------
+draw_bar() {
+  local LABEL=$1
+  local VALUE=$2
+  local WIDTH=20
+  local FILL=$((VALUE * WIDTH / 100))
+  local EMPTY=$((WIDTH - FILL))
+  printf "%-6s [" "$LABEL"
+  printf "%0.s█" $(seq 1 $FILL)
+  printf "%0.s░" $(seq 1 $EMPTY)
+  printf "] %s%%\n" "$VALUE"
+}
+
+# ---------------- CPU CHECK ----------------
+echo
+echo "--------------------------------------------------------"
+echo "[SRE] CPU Check"
+echo "--------------------------------------------------------"
+draw_bar "CPU" "$CPU_USAGE"
+[ "$CPU_USAGE" -ge 85 ] && CRITICAL=$((CRITICAL+1))
+
+# ---------------- DISK CHECK ----------------
+echo
+echo "--------------------------------------------------------"
+echo "[SRE] Disk Check"
+echo "--------------------------------------------------------"
+draw_bar "Disk" "$DISK_USED_PERCENT"
+[ "$DISK_USED_PERCENT" -ge 90 ] && CRITICAL=$((CRITICAL+1))
+
+# ---------------- MEMORY CHECK ----------------
+echo
+echo "--------------------------------------------------------"
+echo "[SRE] Memory Check"
+echo "--------------------------------------------------------"
+draw_bar "Memory" "$MEM_USED_PERCENT"
+[ "$MEM_USED_PERCENT" -ge 85 ] && WARNING=$((WARNING+1))
+
+# ---------------- TEMP FILE CHECK ----------------
+TMP_SIZE=$(du -sh /tmp 2>/dev/null | awk '{print $1}')
+VARTMP_SIZE=$(du -sh /var/tmp 2>/dev/null | awk '{print $1}')
+
+echo
+echo "--------------------------------------------------------"
+echo "[SRE] Temp Files Check"
+echo "--------------------------------------------------------"
+echo "[TEMP] Path : /tmp     (-d temp)  Size : $TMP_SIZE"
+echo "[TEMP] Path : /var/tmp (-d temp)  Size : $VARTMP_SIZE"
+echo "[NOTE] Use: im -ct  to clear temp files"
+
+# ---------------- SERVICE CHECK (AUTO-REMEDIATE) ----------------
+echo
+echo "--------------------------------------------------------"
+echo "[SRE] Service Check (Auto-Remediation)"
+echo "--------------------------------------------------------"
+
+for svc in "${MAIN_SERVICES[@]}"; do
+  if ! systemctl list-unit-files | grep -q "^$svc.service"; then
+    echo "[INFO] $svc not installed"
+    INFO=$((INFO+1))
+    continue
+  fi
+
+  if systemctl is-active "$svc" &>/dev/null; then
+    echo "[INFO] $svc running"
+    INFO=$((INFO+1))
+  else
+    echo "[CRITICAL] $svc is DOWN"
+    echo "[ACTION] Enabling and starting $svc"
+
+    sudo systemctl enable "$svc" &>/dev/null
+    sudo systemctl start "$svc" &>/dev/null
+
+    sleep 1
+
+    if systemctl is-active "$svc" &>/dev/null; then
+      echo "[FIXED] $svc started successfully"
+      INFO=$((INFO+1))
+      HEALTH_SCORE=$((HEALTH_SCORE-5))
+    else
+      echo "[FAILED] Unable to start $svc"
+      CRITICAL=$((CRITICAL+1))
+      HEALTH_SCORE=$((HEALTH_SCORE-15))
+    fi
+  fi
+done
+
+echo "[NOTE] Use: im -es  to edit or add services"
+
+# ---------------- DOCKER CHECK ----------------
+echo
+echo "--------------------------------------------------------"
+echo "[DEVOPS] Docker Container Check"
+echo "--------------------------------------------------------"
+
+if command -v docker &>/dev/null && systemctl is-active docker &>/dev/null; then
+  docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
+  echo
+  docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+else
+  echo "[INFO] Docker not running or not installed"
+fi
+
+# ---------------- FINAL STATUS ----------------
+if [ "$CRITICAL" -gt 0 ]; then
+  FINAL_STATUS="❌ CRITICAL"
+  EXIT_CODE=2
+elif [ "$WARNING" -gt 0 ]; then
+  FINAL_STATUS="⚠️ DEGRADED"
+  EXIT_CODE=1
+else
+  FINAL_STATUS="✅ HEALTHY"
+  EXIT_CODE=0
+fi
+
+END_TIME=$(date "+%Y-%m-%d %H:%M:%S")
+RUNTIME=$(( $(date +%s) - START_EPOCH ))
+
+# ---------------- JSON OUTPUT ----------------
+if [ "$JSON_MODE" = true ]; then
+cat <<EOF
+{
+  "host": "$HOST",
+  "os": "$OS_FULL",
+  "cpu_usage": $CPU_USAGE,
+  "memory_used_percent": $MEM_USED_PERCENT,
+  "disk_used_percent": $DISK_USED_PERCENT,
+  "critical": $CRITICAL,
+  "warning": $WARNING,
+  "final_status": "$FINAL_STATUS",
+  "exit_code": $EXIT_CODE,
+  "runtime_seconds": $RUNTIME
+}
+EOF
+exit $EXIT_CODE
+fi
+
+# ---------------- SUMMARY ----------------
+cat <<EOF
+
+========================================================
+ SUMMARY
+========================================================
+CRITICAL : $CRITICAL
+WARNING  : $WARNING
+INFO     : $INFO
+
+FINAL STATUS  : $FINAL_STATUS
+EXIT CODE     : $EXIT_CODE
+END TIME      : $END_TIME
+TOTAL RUNTIME : $RUNTIME seconds
+EOF
+
+exit $EXIT_CODE

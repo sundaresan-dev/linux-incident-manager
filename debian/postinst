@@ -1,0 +1,5 @@
+#!/bin/bash
+cp /usr/share/im/im /usr/local/bin/im
+chmod +x /usr/local/bin/im
+mkdir -p /etc/im
+

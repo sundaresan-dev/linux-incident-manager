@@ -1,0 +1,7 @@
+Package: im
+Version: 1.8.4
+Section: admin
+Priority: optional
+Architecture: all
+Maintainer: Sundaresan
+Description: Linux Incident Manager CLI tool
