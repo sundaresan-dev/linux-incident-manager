@@ -43,7 +43,7 @@ DIM="\033[2m"
 CHECK="✓"
 CROSS="✗"
 WARN="⚠"
-INFO="ℹ"
+INFO_SYMBOL="ℹ"  # Renamed from INFO to avoid conflict
 ARROW="➜"
 DOT="•"
 BAR="▬"
@@ -130,6 +130,7 @@ else
   OS_FULL="Unknown Linux"
 fi
 
+
 # ---------------- DISPLAY AUTHOR INFO ONE BY ONE ----------------
 display_author_info() {
     echo -e "\n${BOLD}${MAGENTA}╔══════════════════════════════════════════════════════════╗${RESET}"
@@ -152,7 +153,7 @@ display_author_info() {
     echo -e "  ${CYAN}${DOT} ${BOLD}Version${RESET}          : ${BOLD}$VERSION${RESET}"
     
     echo -e "${DIM}${MAGENTA}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${RESET}"
-}
+} 
 
 # ---------------- HEADER ----------------
 echo -e "${BOLD}${BLUE}"
@@ -257,7 +258,7 @@ echo -e "${BOLD}${CYAN}│${RESET} ${BOLD}${WHITE}🗑️  TEMPORARY FILES${RESE
 echo -e "${BOLD}${CYAN}└────────────────────────────────────────────────────────┘${RESET}"
 echo -e "  ${DIM}${WHITE}${DOT}${RESET} ${BOLD}/tmp${RESET}      : ${CYAN}$TMP_SIZE${RESET}"
 echo -e "  ${DIM}${WHITE}${DOT}${RESET} ${BOLD}/var/tmp${RESET}  : ${CYAN}$VARTMP_SIZE${RESET}"
-echo -e "  ${DIM}${YELLOW}${INFO} Note: Use 'im -ct' to clear temp files${RESET}"
+echo -e "  ${DIM}${YELLOW}${INFO_SYMBOL} Note: Use 'im -ct' to clear temp files${RESET}"
 
 # ---------------- SERVICE CHECK (AUTO-REMEDIATE) ----------------
 echo -e "\n${BOLD}${CYAN}┌────────────────────────────────────────────────────────┐${RESET}"
@@ -266,7 +267,7 @@ echo -e "${BOLD}${CYAN}└──────────────────
 
 for svc in "${MAIN_SERVICES[@]}"; do
   if ! systemctl list-unit-files | grep -q "^$svc.service"; then
-    echo -e "  ${BLUE}${INFO} ${BOLD}[INFO]${RESET} $svc ${DIM}(not installed)${RESET}"
+    echo -e "  ${BLUE}${INFO_SYMBOL} ${BOLD}[INFO]${RESET} $svc ${DIM}(not installed)${RESET}"
     INFO=$((INFO+1))
     continue
   fi
@@ -295,7 +296,7 @@ for svc in "${MAIN_SERVICES[@]}"; do
   fi
 done
 
-echo -e "  ${DIM}${YELLOW}${INFO} Note: Use 'im -es' to edit or add services${RESET}"
+echo -e "  ${DIM}${YELLOW}${INFO_SYMBOL} Note: Use 'im -es' to edit or add services${RESET}"
 
 # ---------------- DOCKER CHECK ----------------
 echo -e "\n${BOLD}${CYAN}┌────────────────────────────────────────────────────────┐${RESET}"
@@ -307,7 +308,7 @@ if command -v docker &>/dev/null && systemctl is-active docker &>/dev/null; then
   echo
   docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" | sed 's/^/  /'
 else
-  echo -e "  ${BLUE}${INFO} ${BOLD}[INFO]${RESET} Docker not running or not installed"
+  echo -e "  ${BLUE}${INFO_SYMBOL} ${BOLD}[INFO]${RESET} Docker not running or not installed"
 fi
 
 # ---------------- FINAL STATUS ----------------
@@ -366,16 +367,16 @@ HEALTH_EMPTY=$((HEALTH_BAR_WIDTH - HEALTH_FILL))
 
 printf "  ${DIM}[${RESET}"
 if [ $HEALTH_SCORE -ge 80 ]; then
-  printf "${GREEN}%0.s█${RESET}" $(seq 1 $HEALTH_FILL)
+  printf "${GREEN}%0.s${PROGRESS_FILL}${RESET}" $(seq 1 $HEALTH_FILL)
   HEALTH_COLOR=$GREEN
 elif [ $HEALTH_SCORE -ge 60 ]; then
-  printf "${YELLOW}%0.s█${RESET}" $(seq 1 $HEALTH_FILL)
+  printf "${YELLOW}%0.s${PROGRESS_FILL}${RESET}" $(seq 1 $HEALTH_FILL)
   HEALTH_COLOR=$YELLOW
 else
-  printf "${RED}%0.s█${RESET}" $(seq 1 $HEALTH_FILL)
+  printf "${RED}%0.s${PROGRESS_FILL}${RESET}" $(seq 1 $HEALTH_FILL)
   HEALTH_COLOR=$RED
 fi
-printf "${DIM}%0.s░${RESET}" $(seq 1 $HEALTH_EMPTY)
+printf "${DIM}%0.s${PROGRESS_EMPTY}${RESET}" $(seq 1 $HEALTH_EMPTY)
 printf "${DIM}]${RESET} ${HEALTH_COLOR}%3d/100${RESET}\n" "$HEALTH_SCORE"
 
 # Status Indicators
@@ -406,6 +407,7 @@ echo -e "    ${FINAL_STATUS_COLOR}${FINAL_STATUS_SYMBOL}${RESET} $STATUS_BOX"
 echo -e "\n  ${DIM}${WHITE}${DOT}${RESET} ${BOLD}End Time${RESET}    : $END_TIME"
 echo -e "  ${DIM}${WHITE}${DOT}${RESET} ${BOLD}Runtime${RESET}     : ${CYAN}$RUNTIME seconds${RESET}"
 echo -e "  ${DIM}${WHITE}${DOT}${RESET} ${BOLD}Exit Code${RESET}   : ${BOLD}$EXIT_CODE${RESET}"
+
 
 echo -e "${DIM}${MAGENTA}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${RESET}"
 
