@@ -134,7 +134,7 @@ fi
 # ---------------- DISPLAY AUTHOR INFO ONE BY ONE ----------------
 display_author_info() {
     echo -e "\n${BOLD}${MAGENTA}╔══════════════════════════════════════════════════════════╗${RESET}"
-    echo -e "${BOLD}${MAGENTA}║${RESET} ${BOLD}${WHITE}👨‍💻 AUTHOR INFORMATION${RESET}                          ${BOLD}${MAGENTA}║${RESET}"
+    echo -e "${BOLD}${MAGENTA}║${RESET} ${BOLD}${WHITE}👨‍💻 SCRIPT INFORMATION${RESET}                          ${BOLD}${MAGENTA}║${RESET}"
     echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════════════╝${RESET}"
     
     sleep 0.3
