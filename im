@@ -23,23 +23,51 @@ EXIT_CODE=0
 FINAL_STATUS="HEALTHY"
 JSON_MODE=false
 
+# Color Definitions
+RESET="\033[0m"
+BOLD="\033[1m"
+RED="\033[31m"
+GREEN="\033[32m"
+YELLOW="\033[33m"
+BLUE="\033[34m"
+MAGENTA="\033[35m"
+CYAN="\033[36m"
+WHITE="\033[37m"
+BG_RED="\033[41m"
+BG_GREEN="\033[42m"
+BG_YELLOW="\033[43m"
+BG_BLUE="\033[44m"
+DIM="\033[2m"
+
+# UI Symbols
+CHECK="✓"
+CROSS="✗"
+WARN="⚠"
+INFO="ℹ"
+ARROW="➜"
+DOT="•"
+BAR="▬"
+PROGRESS_FILL="█"
+PROGRESS_EMPTY="░"
+
 # ---------------- DEFAULT SERVICES ----------------
 DEFAULT_SERVICES=(ssh cron docker nginx)
 
 # ---------------- HELP ----------------
 show_help() {
 cat <<EOF
-Linux Incident Manager (im) v$VERSION
+${BOLD}${BLUE}Linux Incident Manager (im) v$VERSION${RESET}
 
-Usage:
-  im              Run system checks
-  im --help       Show help
-  im --init       Initialize default services
-  im -es          Edit / add services
-  im -ct          Clear temp files
-  im -who         Show developer info
-  im --json       Output status in JSON
+${BOLD}Usage:${RESET}
+  ${GREEN}im${RESET}              Run system checks
+  ${GREEN}im --help${RESET}       Show help
+  ${GREEN}im --init${RESET}       Initialize default services
+  ${GREEN}im -es${RESET}          Edit / add services
+  ${GREEN}im -ct${RESET}          Clear temp files
+  ${GREEN}im -who${RESET}         Show developer info
+  ${GREEN}im --json${RESET}       Output status in JSON
 
+${DIM}${WHITE}For more details, visit: https://github.com/linux-im${RESET}
 EOF
 exit 0
 }
@@ -61,30 +89,34 @@ case "$1" in
     for svc in "${DEFAULT_SERVICES[@]}"; do
       echo "$svc" | sudo tee -a "$SERVICE_FILE" >/dev/null
     done
-    echo "[SUCCESS] Default services initialized"
+    echo -e "${GREEN}${CHECK} ${BOLD}[SUCCESS]${RESET} Default services initialized"
     exit 0
     ;;
   -es)
-    echo "[ACTION] Opening service configuration editor"
-    echo "[PATH] $SERVICE_FILE"
+    echo -e "${CYAN}${ARROW} ${BOLD}[ACTION]${RESET} Opening service configuration editor"
+    echo -e "${DIM}${WHITE}    Path: $SERVICE_FILE${RESET}"
     sudo mkdir -p "$CONFIG_DIR"
     sudo touch "$SERVICE_FILE"
     sudo nano "$SERVICE_FILE"
     exit 0
     ;;
   -ct)
-    echo "[ACTION] Clearing temp files..."
+    echo -e "${CYAN}${ARROW} ${BOLD}[ACTION]${RESET} Clearing temp files..."
     sudo rm -rf /tmp/* /var/tmp/* 2>/dev/null
-    echo "[SUCCESS] Temp cleanup completed"
+    echo -e "${GREEN}${CHECK} ${BOLD}[SUCCESS]${RESET} Temp cleanup completed"
     exit 0
     ;;
   -who)
-    echo "Linux Incident Manager"
-    echo "Developer : $DEVELOPER"
+    echo -e "${BOLD}${MAGENTA}Linux Incident Manager${RESET}"
+    echo -e "${DIM}${WHITE}Developer : ${BOLD}$DEVELOPER${RESET}"
+    echo -e "${CYAN}${BOLD}Contact Information:${RESET}"
+    echo -e "  ${GREEN}${ARROW}${RESET} LinkedIn: https://www.linkedin.com/in/sundaresan-dev/"
+    echo -e "  ${GREEN}${ARROW}${RESET} GitHub: https://github.com/sundaresan-dev/"
+    echo -e "  ${GREEN}${ARROW}${RESET} Instagram: @sundar.hac"
     exit 0
     ;;
   *)
-    echo "[ERROR] Unknown option: $1"
+    echo -e "${RED}${CROSS} ${BOLD}[ERROR]${RESET} Unknown option: $1"
     echo
     show_help
     ;;
@@ -98,18 +130,45 @@ else
   OS_FULL="Unknown Linux"
 fi
 
+# ---------------- DISPLAY AUTHOR INFO ONE BY ONE ----------------
+display_author_info() {
+    echo -e "\n${BOLD}${MAGENTA}╔══════════════════════════════════════════════════════════╗${RESET}"
+    echo -e "${BOLD}${MAGENTA}║${RESET} ${BOLD}${WHITE}👨‍💻 AUTHOR INFORMATION${RESET}                          ${BOLD}${MAGENTA}║${RESET}"
+    echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════════════╝${RESET}"
+    
+    sleep 0.3
+    echo -e "  ${GREEN}${CHECK} ${BOLD}Script Writter ${RESET} : ${CYAN}Sundaresan${RESET}"
+    
+    sleep 0.3
+    echo -e "  ${BLUE}${INFO} ${BOLD}LinkedIn${RESET}        : ${WHITE}https://www.linkedin.com/in/sundaresan-dev/${RESET}"
+    
+    sleep 0.3
+    echo -e "  ${YELLOW}${ARROW} ${BOLD}GitHub${RESET}          : ${WHITE}https://github.com/sundaresan-dev/${RESET}"
+    
+    sleep 0.3
+    echo -e "  ${MAGENTA}${DOT} ${BOLD}Instagram${RESET}       : ${WHITE}@sundar.hac${RESET}"
+    
+    sleep 0.3
+    echo -e "  ${CYAN}${DOT} ${BOLD}Version${RESET}          : ${BOLD}$VERSION${RESET}"
+    
+    echo -e "${DIM}${MAGENTA}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${RESET}"
+}
+
 # ---------------- HEADER ----------------
-cat <<EOF
-========================================================
- Linux Incident Manager v$VERSION ($OS_FULL)
- Mode        : AUTO-FIX
- Run Mode    : STANDARD
- Environment : LOCAL
- Host        : $HOST
- OS          : $OS_FULL
- Start Time  : $START_TIME
-========================================================
-EOF
+echo -e "${BOLD}${BLUE}"
+echo "╔══════════════════════════════════════════════════════════╗"
+echo "║                 LINUX INCIDENT MANAGER                   ║"
+echo "╚══════════════════════════════════════════════════════════╝"
+echo -e "${RESET}${DIM}${WHITE}Version    : ${BOLD}$VERSION${RESET} ${DIM}($OS_FULL)${RESET}"
+echo -e "${DIM}${WHITE}Mode       : ${GREEN}AUTO-FIX${RESET}"
+echo -e "${DIM}${WHITE}Run Mode   : ${CYAN}STANDARD${RESET}"
+echo -e "${DIM}${WHITE}Environment: ${YELLOW}LOCAL${RESET}"
+echo -e "${DIM}${WHITE}Host       : ${BOLD}$HOST${RESET}"
+echo -e "${DIM}${WHITE}Start Time : $START_TIME${RESET}"
+echo -e "${DIM}${BLUE}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${RESET}"
+
+# Display author information
+display_author_info
 
 # ---------------- LOAD SERVICES ----------------
 MAIN_SERVICES=()
@@ -128,52 +187,64 @@ DISK_TOTAL=$(df -h / | awk 'NR==2 {print $2}')
 DISK_USED=$(df -h / | awk 'NR==2 {print $3}')
 DISK_USED_PERCENT=$(df / | awk 'NR==2 {gsub("%",""); print $5}')
 
-echo
-echo "--------------------------------------------------------"
-echo "[SYSTEM] Resource Summary"
-echo "--------------------------------------------------------"
-echo "[SYSTEM] Uptime Since   : $UPTIME_SINCE"
-echo "[CPU]    Cores          : $CPU_CORES"
-echo "[CPU]    Usage          : $CPU_USAGE%"
-echo "[MEMORY] Total RAM      : ${TOTAL_MEM_MB} MB"
-echo "[MEMORY] Used RAM       : ${USED_MEM_MB} MB"
-echo "[DISK]   Total Storage  : $DISK_TOTAL"
-echo "[DISK]   Used Storage   : $DISK_USED ($DISK_USED_PERCENT%)"
+echo -e "\n${BOLD}${CYAN}┌────────────────────────────────────────────────────────┐${RESET}"
+echo -e "${BOLD}${CYAN}│${RESET} ${BOLD}${WHITE}📊 SYSTEM RESOURCE SUMMARY${RESET}                   ${BOLD}${CYAN}│${RESET}"
+echo -e "${BOLD}${CYAN}└────────────────────────────────────────────────────────┘${RESET}"
+
+echo -e "  ${DIM}${WHITE}${DOT}${RESET} ${BOLD}Uptime Since${RESET}   : ${CYAN}$UPTIME_SINCE${RESET}"
+echo -e "  ${DIM}${WHITE}${DOT}${RESET} ${BOLD}CPU Cores${RESET}       : ${CYAN}$CPU_CORES${RESET}"
+echo -e "  ${DIM}${WHITE}${DOT}${RESET} ${BOLD}Memory${RESET}          : ${CYAN}${USED_MEM_MB}MB${RESET} / ${TOTAL_MEM_MB}MB"
+echo -e "  ${DIM}${WHITE}${DOT}${RESET} ${BOLD}Disk Usage${RESET}      : ${CYAN}$DISK_USED${RESET} / $DISK_TOTAL"
 
 # ---------------- BAR FUNCTION ----------------
 draw_bar() {
   local LABEL=$1
   local VALUE=$2
-  local WIDTH=20
+  local WIDTH=30
   local FILL=$((VALUE * WIDTH / 100))
   local EMPTY=$((WIDTH - FILL))
-  printf "%-6s [" "$LABEL"
-  printf "%0.s█" $(seq 1 $FILL)
-  printf "%0.s░" $(seq 1 $EMPTY)
-  printf "] %s%%\n" "$VALUE"
+  
+  # Color based on value
+  if [ "$VALUE" -ge 85 ]; then
+    COLOR=$RED
+  elif [ "$VALUE" -ge 70 ]; then
+    COLOR=$YELLOW
+  else
+    COLOR=$GREEN
+  fi
+  
+  printf "  ${BOLD}%-8s${RESET} ${DIM}[${RESET}" "$LABEL"
+  printf "${COLOR}%0.s${PROGRESS_FILL}${RESET}" $(seq 1 $FILL)
+  printf "${DIM}%0.s${PROGRESS_EMPTY}${RESET}" $(seq 1 $EMPTY)
+  printf "${DIM}]${RESET} "
+  
+  if [ "$VALUE" -ge 85 ]; then
+    printf "${RED}%3d%%${RESET}\n" "$VALUE"
+  elif [ "$VALUE" -ge 70 ]; then
+    printf "${YELLOW}%3d%%${RESET}\n" "$VALUE"
+  else
+    printf "${GREEN}%3d%%${RESET}\n" "$VALUE"
+  fi
 }
 
 # ---------------- CPU CHECK ----------------
-echo
-echo "--------------------------------------------------------"
-echo "[SRE] CPU Check"
-echo "--------------------------------------------------------"
+echo -e "\n${BOLD}${CYAN}┌────────────────────────────────────────────────────────┐${RESET}"
+echo -e "${BOLD}${CYAN}│${RESET} ${BOLD}${WHITE}⚡ CPU PERFORMANCE${RESET}                           ${BOLD}${CYAN}│${RESET}"
+echo -e "${BOLD}${CYAN}└────────────────────────────────────────────────────────┘${RESET}"
 draw_bar "CPU" "$CPU_USAGE"
 [ "$CPU_USAGE" -ge 85 ] && CRITICAL=$((CRITICAL+1))
 
 # ---------------- DISK CHECK ----------------
-echo
-echo "--------------------------------------------------------"
-echo "[SRE] Disk Check"
-echo "--------------------------------------------------------"
+echo -e "\n${BOLD}${CYAN}┌────────────────────────────────────────────────────────┐${RESET}"
+echo -e "${BOLD}${CYAN}│${RESET} ${BOLD}${WHITE}💾 DISK USAGE${RESET}                               ${BOLD}${CYAN}│${RESET}"
+echo -e "${BOLD}${CYAN}└────────────────────────────────────────────────────────┘${RESET}"
 draw_bar "Disk" "$DISK_USED_PERCENT"
 [ "$DISK_USED_PERCENT" -ge 90 ] && CRITICAL=$((CRITICAL+1))
 
 # ---------------- MEMORY CHECK ----------------
-echo
-echo "--------------------------------------------------------"
-echo "[SRE] Memory Check"
-echo "--------------------------------------------------------"
+echo -e "\n${BOLD}${CYAN}┌────────────────────────────────────────────────────────┐${RESET}"
+echo -e "${BOLD}${CYAN}│${RESET} ${BOLD}${WHITE}🧠 MEMORY UTILIZATION${RESET}                       ${BOLD}${CYAN}│${RESET}"
+echo -e "${BOLD}${CYAN}└────────────────────────────────────────────────────────┘${RESET}"
 draw_bar "Memory" "$MEM_USED_PERCENT"
 [ "$MEM_USED_PERCENT" -ge 85 ] && WARNING=$((WARNING+1))
 
@@ -181,33 +252,31 @@ draw_bar "Memory" "$MEM_USED_PERCENT"
 TMP_SIZE=$(du -sh /tmp 2>/dev/null | awk '{print $1}')
 VARTMP_SIZE=$(du -sh /var/tmp 2>/dev/null | awk '{print $1}')
 
-echo
-echo "--------------------------------------------------------"
-echo "[SRE] Temp Files Check"
-echo "--------------------------------------------------------"
-echo "[TEMP] Path : /tmp     (-d temp)  Size : $TMP_SIZE"
-echo "[TEMP] Path : /var/tmp (-d temp)  Size : $VARTMP_SIZE"
-echo "[NOTE] Use: im -ct  to clear temp files"
+echo -e "\n${BOLD}${CYAN}┌────────────────────────────────────────────────────────┐${RESET}"
+echo -e "${BOLD}${CYAN}│${RESET} ${BOLD}${WHITE}🗑️  TEMPORARY FILES${RESET}                         ${BOLD}${CYAN}│${RESET}"
+echo -e "${BOLD}${CYAN}└────────────────────────────────────────────────────────┘${RESET}"
+echo -e "  ${DIM}${WHITE}${DOT}${RESET} ${BOLD}/tmp${RESET}      : ${CYAN}$TMP_SIZE${RESET}"
+echo -e "  ${DIM}${WHITE}${DOT}${RESET} ${BOLD}/var/tmp${RESET}  : ${CYAN}$VARTMP_SIZE${RESET}"
+echo -e "  ${DIM}${YELLOW}${INFO} Note: Use 'im -ct' to clear temp files${RESET}"
 
 # ---------------- SERVICE CHECK (AUTO-REMEDIATE) ----------------
-echo
-echo "--------------------------------------------------------"
-echo "[SRE] Service Check (Auto-Remediation)"
-echo "--------------------------------------------------------"
+echo -e "\n${BOLD}${CYAN}┌────────────────────────────────────────────────────────┐${RESET}"
+echo -e "${BOLD}${CYAN}│${RESET} ${BOLD}${WHITE}🛠️  SERVICE HEALTH (Auto-Remediation)${RESET}          ${BOLD}${CYAN}│${RESET}"
+echo -e "${BOLD}${CYAN}└────────────────────────────────────────────────────────┘${RESET}"
 
 for svc in "${MAIN_SERVICES[@]}"; do
   if ! systemctl list-unit-files | grep -q "^$svc.service"; then
-    echo "[INFO] $svc not installed"
+    echo -e "  ${BLUE}${INFO} ${BOLD}[INFO]${RESET} $svc ${DIM}(not installed)${RESET}"
     INFO=$((INFO+1))
     continue
   fi
 
   if systemctl is-active "$svc" &>/dev/null; then
-    echo "[INFO] $svc running"
+    echo -e "  ${GREEN}${CHECK} ${BOLD}[OK]${RESET} $svc ${GREEN}running${RESET}"
     INFO=$((INFO+1))
   else
-    echo "[CRITICAL] $svc is DOWN"
-    echo "[ACTION] Enabling and starting $svc"
+    echo -e "  ${RED}${CROSS} ${BOLD}[CRITICAL]${RESET} $svc ${RED}is DOWN${RESET}"
+    echo -e "    ${YELLOW}${ARROW} ${BOLD}[ACTION]${RESET} Enabling and starting $svc"
 
     sudo systemctl enable "$svc" &>/dev/null
     sudo systemctl start "$svc" &>/dev/null
@@ -215,47 +284,55 @@ for svc in "${MAIN_SERVICES[@]}"; do
     sleep 1
 
     if systemctl is-active "$svc" &>/dev/null; then
-      echo "[FIXED] $svc started successfully"
+      echo -e "    ${GREEN}${CHECK} ${BOLD}[FIXED]${RESET} $svc ${GREEN}started successfully${RESET}"
       INFO=$((INFO+1))
       HEALTH_SCORE=$((HEALTH_SCORE-5))
     else
-      echo "[FAILED] Unable to start $svc"
+      echo -e "    ${RED}${CROSS} ${BOLD}[FAILED]${RESET} Unable to start $svc"
       CRITICAL=$((CRITICAL+1))
       HEALTH_SCORE=$((HEALTH_SCORE-15))
     fi
   fi
 done
 
-echo "[NOTE] Use: im -es  to edit or add services"
+echo -e "  ${DIM}${YELLOW}${INFO} Note: Use 'im -es' to edit or add services${RESET}"
 
 # ---------------- DOCKER CHECK ----------------
-echo
-echo "--------------------------------------------------------"
-echo "[DEVOPS] Docker Container Check"
-echo "--------------------------------------------------------"
+echo -e "\n${BOLD}${CYAN}┌────────────────────────────────────────────────────────┐${RESET}"
+echo -e "${BOLD}${CYAN}│${RESET} ${BOLD}${WHITE}🐳 DOCKER CONTAINERS${RESET}                        ${BOLD}${CYAN}│${RESET}"
+echo -e "${BOLD}${CYAN}└────────────────────────────────────────────────────────┘${RESET}"
 
 if command -v docker &>/dev/null && systemctl is-active docker &>/dev/null; then
-  docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
+  docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}" | sed 's/^/  /'
   echo
-  docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+  docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" | sed 's/^/  /'
 else
-  echo "[INFO] Docker not running or not installed"
+  echo -e "  ${BLUE}${INFO} ${BOLD}[INFO]${RESET} Docker not running or not installed"
 fi
 
 # ---------------- FINAL STATUS ----------------
 if [ "$CRITICAL" -gt 0 ]; then
-  FINAL_STATUS="❌ CRITICAL"
+  FINAL_STATUS_WORD="CRITICAL"
+  FINAL_STATUS_COLOR=$RED
+  FINAL_STATUS_SYMBOL=$CROSS
   EXIT_CODE=2
 elif [ "$WARNING" -gt 0 ]; then
-  FINAL_STATUS="⚠️ DEGRADED"
+  FINAL_STATUS_WORD="DEGRADED"
+  FINAL_STATUS_COLOR=$YELLOW
+  FINAL_STATUS_SYMBOL=$WARN
   EXIT_CODE=1
 else
-  FINAL_STATUS="✅ HEALTHY"
+  FINAL_STATUS_WORD="HEALTHY"
+  FINAL_STATUS_COLOR=$GREEN
+  FINAL_STATUS_SYMBOL=$CHECK
   EXIT_CODE=0
 fi
 
 END_TIME=$(date "+%Y-%m-%d %H:%M:%S")
 RUNTIME=$(( $(date +%s) - START_EPOCH ))
+
+# Calculate health score based on issues
+HEALTH_SCORE=$((100 - (CRITICAL * 30) - (WARNING * 10)))
 
 # ---------------- JSON OUTPUT ----------------
 if [ "$JSON_MODE" = true ]; then
@@ -268,7 +345,7 @@ cat <<EOF
   "disk_used_percent": $DISK_USED_PERCENT,
   "critical": $CRITICAL,
   "warning": $WARNING,
-  "final_status": "$FINAL_STATUS",
+  "final_status": "$FINAL_STATUS_WORD",
   "exit_code": $EXIT_CODE,
   "runtime_seconds": $RUNTIME
 }
@@ -277,19 +354,59 @@ exit $EXIT_CODE
 fi
 
 # ---------------- SUMMARY ----------------
-cat <<EOF
+echo -e "\n${BOLD}${BLUE}╔══════════════════════════════════════════════════════════╗${RESET}"
+echo -e "${BOLD}${BLUE}║${RESET} ${BOLD}${WHITE}📈 SYSTEM SUMMARY${RESET}                              ${BOLD}${BLUE}║${RESET}"
+echo -e "${BOLD}${BLUE}╚══════════════════════════════════════════════════════════╝${RESET}"
 
-========================================================
- SUMMARY
-========================================================
-CRITICAL : $CRITICAL
-WARNING  : $WARNING
-INFO     : $INFO
+# Health Score Bar
+echo -e "  ${BOLD}Health Score${RESET}"
+HEALTH_BAR_WIDTH=30
+HEALTH_FILL=$((HEALTH_SCORE * HEALTH_BAR_WIDTH / 100))
+HEALTH_EMPTY=$((HEALTH_BAR_WIDTH - HEALTH_FILL))
 
-FINAL STATUS  : $FINAL_STATUS
-EXIT CODE     : $EXIT_CODE
-END TIME      : $END_TIME
-TOTAL RUNTIME : $RUNTIME seconds
-EOF
+printf "  ${DIM}[${RESET}"
+if [ $HEALTH_SCORE -ge 80 ]; then
+  printf "${GREEN}%0.s█${RESET}" $(seq 1 $HEALTH_FILL)
+  HEALTH_COLOR=$GREEN
+elif [ $HEALTH_SCORE -ge 60 ]; then
+  printf "${YELLOW}%0.s█${RESET}" $(seq 1 $HEALTH_FILL)
+  HEALTH_COLOR=$YELLOW
+else
+  printf "${RED}%0.s█${RESET}" $(seq 1 $HEALTH_FILL)
+  HEALTH_COLOR=$RED
+fi
+printf "${DIM}%0.s░${RESET}" $(seq 1 $HEALTH_EMPTY)
+printf "${DIM}]${RESET} ${HEALTH_COLOR}%3d/100${RESET}\n" "$HEALTH_SCORE"
+
+# Status Indicators
+echo -e "\n  ${BOLD}Status Overview${RESET}"
+echo -e "    ${RED}${CROSS} Critical${RESET}  : ${RED}$CRITICAL${RESET}"
+echo -e "    ${YELLOW}${WARN} Warning${RESET}   : ${YELLOW}$WARNING${RESET}"
+echo -e "    ${GREEN}${CHECK} Healthy${RESET}   : ${GREEN}$INFO${RESET}"
+
+# Final Status with box
+echo -e "\n  ${BOLD}Final Status${RESET}"
+
+# Create colored status box
+STATUS_BOX=""
+case "$FINAL_STATUS_WORD" in
+  "CRITICAL")
+    STATUS_BOX="${BG_RED}${BOLD}${WHITE}  CRITICAL  ${RESET}"
+    ;;
+  "DEGRADED")
+    STATUS_BOX="${BG_YELLOW}${BOLD}${WHITE}  DEGRADED  ${RESET}"
+    ;;
+  "HEALTHY")
+    STATUS_BOX="${BG_GREEN}${BOLD}${WHITE}  HEALTHY  ${RESET}"
+    ;;
+esac
+
+echo -e "    ${FINAL_STATUS_COLOR}${FINAL_STATUS_SYMBOL}${RESET} $STATUS_BOX"
+
+echo -e "\n  ${DIM}${WHITE}${DOT}${RESET} ${BOLD}End Time${RESET}    : $END_TIME"
+echo -e "  ${DIM}${WHITE}${DOT}${RESET} ${BOLD}Runtime${RESET}     : ${CYAN}$RUNTIME seconds${RESET}"
+echo -e "  ${DIM}${WHITE}${DOT}${RESET} ${BOLD}Exit Code${RESET}   : ${BOLD}$EXIT_CODE${RESET}"
+
+echo -e "${DIM}${MAGENTA}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${BAR}${RESET}"
 
 exit $EXIT_CODE
