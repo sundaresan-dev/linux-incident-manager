@@ -8,8 +8,9 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# Absolute path of repo
+# Absolute path of the cloned repo
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+USER_HOME=$(eval echo "~$SUDO_USER")
 
 # Install binary
 cp "$SCRIPT_DIR/im" /usr/local/bin/im
@@ -22,13 +23,14 @@ echo "[SUCCESS] im installed successfully"
 echo "[INFO] Binary installed at /usr/local/bin/im"
 echo "[INFO] Config directory created at /etc/im"
 
-# Move out of repo before deleting
-cd / || exit 0
+# Move out before deleting repo
+cd "$USER_HOME" || exit 0
 
 echo "[CLEANUP] Removing local installer directory..."
 rm -rf "$SCRIPT_DIR"
 
 echo "[DONE] Local repository removed"
+echo "[INFO] Returned to home directory: $USER_HOME"
 echo "[INFO] Installation complete"
 echo "[INFO] Run: im --help"
-cd ~ || exit 0
+
