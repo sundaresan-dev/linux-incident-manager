@@ -31,4 +31,4 @@ rm -rf "$SCRIPT_DIR"
 echo "[DONE] Local repository removed"
 echo "[INFO] Installation complete"
 echo "[INFO] Run: im --help"
-
+cd ~ || exit 0
