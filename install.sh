@@ -8,11 +8,11 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# Absolute path of the cloned repo
+# Absolute path of repo
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Install binary
-mv "$SCRIPT_DIR/im" /usr/local/bin/im
+cp "$SCRIPT_DIR/im" /usr/local/bin/im
 chmod +x /usr/local/bin/im
 
 # Create config directory
@@ -22,9 +22,11 @@ echo "[SUCCESS] im installed successfully"
 echo "[INFO] Binary installed at /usr/local/bin/im"
 echo "[INFO] Config directory created at /etc/im"
 
-# Auto delete local repo
-echo "[CLEANUP] Removing local installer files..."
-rm -rf "~/$SCRIPT_DIR"
+# Move out of repo before deleting
+cd / || exit 0
+
+echo "[CLEANUP] Removing local installer directory..."
+rm -rf "$SCRIPT_DIR"
 
 echo "[DONE] Local repository removed"
 echo "[INFO] Installation complete"
