@@ -11,28 +11,26 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # Detect package manager
-PKG_MANAGER=""
-
 if command -v apt >/dev/null 2>&1; then
-  PKG_MANAGER="apt"
+  PKG="apt"
 elif command -v dnf >/dev/null 2>&1; then
-  PKG_MANAGER="dnf"
+  PKG="dnf"
 elif command -v yum >/dev/null 2>&1; then
-  PKG_MANAGER="yum"
+  PKG="yum"
 elif command -v pacman >/dev/null 2>&1; then
-  PKG_MANAGER="pacman"
+  PKG="pacman"
 else
   echo "[ERROR] No supported package manager found (apt/dnf/yum/pacman)"
   exit 1
 fi
 
-echo "[INFO] Detected package manager: $PKG_MANAGER"
+echo "[INFO] Detected package manager: $PKG"
 
 # Install git if not present
 if ! command -v git >/dev/null 2>&1; then
   echo "[INFO] Git not found. Installing git..."
 
-  case "$PKG_MANAGER" in
+  case "$PKG" in
     apt)
       apt update
       apt install -y git
@@ -47,9 +45,18 @@ if ! command -v git >/dev/null 2>&1; then
       pacman -Sy --noconfirm git
       ;;
   esac
-else
-  echo "[INFO] Git already installed."
 fi
+
+# Refresh command cache
+hash -r
+
+# Verify git again
+if ! command -v git >/dev/null 2>&1; then
+  echo "[ERROR] Git installation failed or git not in PATH!"
+  exit 1
+fi
+
+echo "[INFO] Git is available: $(which git)"
 
 # Temp working directory
 TMP_DIR=$(mktemp -d)
